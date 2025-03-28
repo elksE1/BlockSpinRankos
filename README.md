@@ -456,4 +456,103 @@ Section:NewButton("Show BackPack (ULTRA OP!)", "ButtonInfo", function()
     mouse.Move:Connect(onHover)
 end)
 
+local Tab = Window:NewTab("Main")
+local Section = Tab:NewSection("Enjoy your ESP -- By Rankos")
+
+Section:NewButton("Infinite Stamina", "ButtonInfo", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/xr7KqydH"))();
+end)
+
+
+local selectedPlayerName = ""
+local moveConnection
+local userInputService = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+-- Stocker le nom du joueur
+Section:NewTextBox("Username : ", "TextboxInfo", function(txt)
+    selectedPlayerName = txt
+end)
+
+Section:NewLabel("after writing the nickname (Press enter) ")
+
+-- Désactiver les animations
+local function disableAnimations()
+    if character then
+        for _, v in pairs(character:GetDescendants()) do
+            if v:IsA("Animator") then
+                v.Parent = nil -- Supprime l'Animator pour stopper toutes les animations
+            end
+        end
+    end
+end
+
+-- Réactiver les animations
+local function enableAnimations()
+    if character and not character:FindFirstChildOfClass("Animator") then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = Instance.new("Animator")
+            animator.Parent = humanoid -- Réactive les animations
+        end
+    end
+end
+
+-- Désactiver les mouvements et le saut
+local function disableControls()
+    humanoid.WalkSpeed = 0
+    humanoid.JumpPower = 0
+end
+
+-- Réactiver les mouvements et le saut
+local function enableControls()
+    humanoid.WalkSpeed = 16 -- Remet la vitesse normale
+    humanoid.JumpPower = 50 -- Remet la puissance de saut normale
+end
+
+-- Déplacement vers le joueur
+Section:NewToggle("Teleport To The Player", "", function(state)
+    if state then
+        local targetPlayer = game.Players:FindFirstChild(selectedPlayerName)
+        
+        if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = targetPlayer.Character.HumanoidRootPart
+            
+            -- Désactiver le mouvement, le saut et les animations
+            disableControls()
+            disableAnimations()
+
+            -- Déplacement automatique vers le joueur
+            moveConnection = game:GetService("RunService").Stepped:Connect(function(_, dt)
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local myHRP = player.Character.HumanoidRootPart
+                    local direction = (targetHRP.Position - myHRP.Position).unit * (16 * dt)
+                    
+                    if (targetHRP.Position - myHRP.Position).magnitude > 2 then
+                        myHRP.Velocity = direction * 50
+                    else
+                        myHRP.Velocity = Vector3.new(0, 0, 0)
+                    end
+                end
+            end)
+        else
+            warn("Joueur introuvable ou pas de personnage !")
+        end
+    else
+        -- Arrêter le déplacement et réactiver les contrôles
+        if moveConnection then
+            moveConnection:Disconnect()
+            moveConnection = nil
+        end
+        enableControls() -- ✅ Réactive les touches quand on stoppe le déplacement
+        enableAnimations() -- ✅ Réactive les animations
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+        end
+    end
+end)
+
+
 
